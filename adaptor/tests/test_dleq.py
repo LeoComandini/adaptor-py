@@ -10,5 +10,5 @@ class TestsDLEQ(unittest.TestCase):
         Y = y * G
         X = x * G
         R = x * Y
-        b, c = dleq_prove(x, X, Y, R)
-        self.assertTrue(dleq_verify(X, Y, R, b, c))
+        proof = dleq_prove(x, X, Y, R)
+        self.assertTrue(dleq_verify(X, Y, R, proof))

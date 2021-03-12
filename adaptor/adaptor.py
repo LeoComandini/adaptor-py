@@ -16,10 +16,10 @@ from adaptor.ecdsa import (
 from adaptor.dleq import (
     dleq_prove,
     dleq_verify,
+    DLEQProof,
 )
 
-# TODO: DLEQProof
-AdaptorSig = Tuple[Pubkey, Pubkey, int, int, int]
+AdaptorSig = Tuple[Pubkey, Pubkey, int, DLEQProof]
 
 def nonce(x: int, Y: Pubkey, message_hash: bytes) -> int:
     # TODO: prolly wrong
@@ -30,15 +30,15 @@ def ecdsa_adaptor_encrypt(x: int, Y: Pubkey, message_hash: bytes) -> AdaptorSig:
     k = nonce(x, Y, message_hash)
     R_a = k * G
     R = k * Y
-    b, c = dleq_prove(k, R_a, Y, R)
+    dleq_proof = dleq_prove(k, R_a, Y, R)
     r = R.x % n
     m = int_from_bytes(message_hash)
     s_a = (mod_inv(k, n) * (m + r * x)) % n
-    return R, R_a, s_a, b, c
+    return R, R_a, s_a, dleq_proof
 
 def ecdsa_adaptor_verify(X: Pubkey, Y: Pubkey, message_hash: bytes, a: AdaptorSig) -> bool:
-    R, R_a, s_a, b, c = a
-    if not dleq_verify(R_a, Y, R, b, c):
+    R, R_a, s_a, dleq_proof = a
+    if not dleq_verify(R_a, Y, R, dleq_proof):
         return False
     r = R.x % n
     m = int_from_bytes(message_hash)
@@ -47,7 +47,7 @@ def ecdsa_adaptor_verify(X: Pubkey, Y: Pubkey, message_hash: bytes, a: AdaptorSi
     return u1*G + u2*X == R_a
 
 def ecdsa_adaptor_decrypt(a: AdaptorSig, y: int) -> ECDSASig:
-    R, R_a, s_a, b, c = a
+    R, R_a, s_a, dleq_proof = a
     s = s_a * mod_inv(y, n)
     if s > (n >> 1):
         s = n - s
@@ -55,7 +55,7 @@ def ecdsa_adaptor_decrypt(a: AdaptorSig, y: int) -> ECDSASig:
     return r, s
 
 def ecdsa_adaptor_recover(Y: Pubkey, a: AdaptorSig, sig: ECDSASig) -> int:
-    R, R_a, s_a, b, c = a
+    R, R_a, s_a, dleq_proof = a
     r, s = sig
     r_implied = R.x % n
     assert r == r_implied
