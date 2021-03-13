@@ -19,15 +19,15 @@ from adaptor.dleq import (
     DLEQProof,
 )
 
-AdaptorSig = Tuple[Pubkey, Pubkey, int, DLEQProof]
+ECDSAAdaptorSig = Tuple[Pubkey, Pubkey, int, DLEQProof]
 
-def nonce(x: int, Y: Pubkey, message_hash: bytes) -> int:
+def ecdsa_nonce(x: int, Y: Pubkey, message_hash: bytes) -> int:
     # TODO: use right one to match test vectors
-    h = tagged_hash("ADAPTOR", bytes_from_int(x) + Y.to_bytes() + message_hash)
+    h = tagged_hash("ECDSA ADAPTOR", bytes_from_int(x) + Y.to_bytes() + message_hash)
     return int_from_bytes(h) % n
 
-def ecdsa_adaptor_encrypt(x: int, Y: Pubkey, message_hash: bytes) -> AdaptorSig:
-    k = nonce(x, Y, message_hash)
+def ecdsa_adaptor_encrypt(x: int, Y: Pubkey, message_hash: bytes) -> ECDSAAdaptorSig:
+    k = ecdsa_nonce(x, Y, message_hash)
     R_a = k * G
     R = k * Y
     dleq_proof = dleq_prove(k, R_a, Y, R)
@@ -36,7 +36,7 @@ def ecdsa_adaptor_encrypt(x: int, Y: Pubkey, message_hash: bytes) -> AdaptorSig:
     s_a = (mod_inv(k, n) * (m + r * x)) % n
     return R, R_a, s_a, dleq_proof
 
-def ecdsa_adaptor_verify(X: Pubkey, Y: Pubkey, message_hash: bytes, a: AdaptorSig) -> bool:
+def ecdsa_adaptor_verify(X: Pubkey, Y: Pubkey, message_hash: bytes, a: ECDSAAdaptorSig) -> bool:
     R, R_a, s_a, dleq_proof = a
     if not dleq_verify(R_a, Y, R, dleq_proof):
         return False
@@ -46,7 +46,7 @@ def ecdsa_adaptor_verify(X: Pubkey, Y: Pubkey, message_hash: bytes, a: AdaptorSi
     u2 = mod_inv(s_a, n) * r % n
     return u1*G + u2*X == R_a
 
-def ecdsa_adaptor_decrypt(a: AdaptorSig, y: int) -> ECDSASig:
+def ecdsa_adaptor_decrypt(a: ECDSAAdaptorSig, y: int) -> ECDSASig:
     R, R_a, s_a, dleq_proof = a
     s = s_a * mod_inv(y, n)
     if s > (n >> 1):
@@ -54,7 +54,7 @@ def ecdsa_adaptor_decrypt(a: AdaptorSig, y: int) -> ECDSASig:
     r = R.x % n
     return r, s
 
-def ecdsa_adaptor_recover(Y: Pubkey, a: AdaptorSig, sig: ECDSASig) -> int:
+def ecdsa_adaptor_recover(Y: Pubkey, a: ECDSAAdaptorSig, sig: ECDSASig) -> int:
     R, R_a, s_a, dleq_proof = a
     r, s = sig
     r_implied = R.x % n
