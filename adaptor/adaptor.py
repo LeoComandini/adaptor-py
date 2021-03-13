@@ -22,7 +22,7 @@ from adaptor.dleq import (
 AdaptorSig = Tuple[Pubkey, Pubkey, int, DLEQProof]
 
 def nonce(x: int, Y: Pubkey, message_hash: bytes) -> int:
-    # TODO: prolly wrong
+    # TODO: use right one to match test vectors
     h = tagged_hash("ADAPTOR", bytes_from_int(x) + Y.to_bytes() + message_hash)
     return int_from_bytes(h) % n
 

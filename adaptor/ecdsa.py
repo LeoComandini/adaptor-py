@@ -14,7 +14,7 @@ from adaptor.ecc import (
 ECDSASig = Tuple[int, int]
 
 def nonce(x: int, message_hash: bytes) -> int:
-    # TODO: prolly wrong
+    # TODO: use right one to match test vectors
     h = tagged_hash("ECDSA", bytes_from_int(x) + message_hash)
     return int_from_bytes(h) % n
 
