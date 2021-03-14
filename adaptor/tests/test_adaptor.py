@@ -31,7 +31,7 @@ class TestsAdaptor(unittest.TestCase):
         a = schnorr_adaptor_encrypt(x, y, message_hash)
         self.assertTrue(schnorr_adaptor_verify(X, Y, message_hash, a))
         sig = schnorr_adaptor_decrypt(a, y)
-        y_recovered = schnorr_adaptor_recover(Y, a, sig)
+        y_recovered = schnorr_adaptor_recover(a, sig)
         self.assertEqual(y, y_recovered)
 
     def test_dlc_bet_ecdsa(self):

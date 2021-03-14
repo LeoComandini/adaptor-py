@@ -96,7 +96,7 @@ def schnorr_adaptor_decrypt(a: SchnorrAdaptorSig, y: int) -> SchnorrSig:
     s_a, R = a
     return (s_a - y) % n, R
 
-def schnorr_adaptor_recover(Y: Pubkey, a: SchnorrAdaptorSig, sig: SchnorrSig) -> int:
+def schnorr_adaptor_recover(a: SchnorrAdaptorSig, sig: SchnorrSig) -> int:
     s_a, R_a = a
     s, R = sig
     assert R_a == R
