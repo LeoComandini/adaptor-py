@@ -1,4 +1,5 @@
 from typing import (
+    Optional,
     Tuple,
 )
 from adaptor.ecc import (
@@ -22,8 +23,9 @@ def schnorr_challenge(X: Pubkey, R: Pubkey, message_hash: bytes) -> int:
     h = tagged_hash("Schnorr challenge", X.to_bytes() + R.to_bytes() + message_hash)
     return int_from_bytes(h) % n
 
-def schnorr_sign(x: int, message_hash: bytes) -> SchnorrSig:
-    k = nonce(x, message_hash)
+def schnorr_sign(x: int, message_hash: bytes, k: Optional[int] = None) -> SchnorrSig:
+    if not k:
+        k = nonce(x, message_hash)
     R = k * G
     X = x * G
     e = schnorr_challenge(X, R, message_hash)
