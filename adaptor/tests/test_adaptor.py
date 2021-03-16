@@ -55,16 +55,15 @@ class TestsAdaptor(unittest.TestCase):
         k = rand32()
         R = k * G
 
-        # Alice and Bob send funds to a 2of2 output multi(2, A, B).
-        # If the Oracle becomes unavailable, Alice and Bob can cooperate to
-        # spend.
-        # The winner will be able to obtain a valid ecdsa signature from the
-        # Oracle.
+        # Alice and Bob create a "Funding Transaction" sending funds to a 2of2
+        # output multi(2, A, B) without signing it.
+        # We need to know the txid of the tx even if it's not signed, thus all
+        # tx inputs must be segwit.
         # Each gambler constructs a tx spending such output and sending the
-        # funds to his/her desired destination.
-        # Such transactions require some signature hashes to be signed, the one
-        # sending funds to Alice requires m_ta, the one sending funds to Bob
-        # requires m_tb.
+        # funds to his/her desired destination, such tx are called Contract
+        # Execution Transactions (CET).
+        # CETs require some signature hashes to be signed, CET sending funds to
+        # Alice requires m_ta, CET sending funds to Bob requires m_tb.
         # They associate m_ea and m_eb to the outcomes of the event.
         # If Alice wins, Oracle will schnorr sign m_ea.
         # If Bob wins, Oracle will schnorr sign m_eb.
@@ -92,14 +91,15 @@ class TestsAdaptor(unittest.TestCase):
         adaptor_sig_b = ecdsa_adaptor_encrypt(b, S_a, m_ta)
 
         # They both exchange the adaptor signatures.
-        # FIXME: should this exchange be atomic?
-        #        what if one of the 2 verifications fails?
-        #        a trusted 3rd party may hold the adaptor sigs until it hasn't
-        #        received both and they are valid.
         # Alice verifies Bob's adaptor signature:
         self.assertTrue(ecdsa_adaptor_verify(B, S_a, m_ta, adaptor_sig_b))
         # Bob verifies Alice's adaptor signature:
         self.assertTrue(ecdsa_adaptor_verify(A, S_b, m_tb, adaptor_sig_a))
+        # After verification succeeds, each party signs the Funding
+        # Transaction, which can then be broadcast.
+        # Alice and Bob wait for the event to happen.
+        # If the Oracle becomes unavailable, Alice and Bob can cooperate to
+        # spend, ignoring the event result.
 
         # Now suppose WLOG that Alice wins.
         # Oracle signs m_ea, using nonce (k, R) and publishes the signature.
